@@ -70,18 +70,40 @@ def calc_fold(feats,X,Y,train_ix,valid_ix,C=10e12):
     return np.mean(squares[train_ix]),np.mean(squares[valid_ix])
     
 errs = []
+# numero de vezes que itera para depois fazer a média
 folds = 10
 
 kf = skf(yr,n_folds = folds)
 
-for C in range(1,21):
+
+menorC_va_err=200000
+
+#Parametro especifico
+C=1;
+#Vamos guardar em que numero de parametro tivemos o menor valor de va_err (guardado em cima)
+bestNumberofC=0
+#Plot the errors against the logarithm of the C value
+arrayC = []
+
+for idx in range(1,21):
     tr_err = va_err = 0
     for tr_ix,va_ix in kf:#for k,(tr_ix,va_ix) in enumerate(kf)
         r,v = calc_fold(feats,xr,yr,tr_ix, va_ix,C)
         tr_err += r
         va_err += v
-        print feats,':',tr_err/folds, va_err/folds#, np.std.std_mean/folds #adicionar desvio padrao
+    
+        #menor erro validade
+        #guardar esse c em especifico. meter no grafico os erros em funcao do enunciado
+    if menorC_va_err >=  va_err:
+        menorC_va_err = va_err
+        bestNumberofC = C
+        print(menorC_va_err)
+        
+        #
+    print feats,':',tr_err/folds, va_err/folds#, np.std.std_mean/folds #adicionar desvio padrao
+    
     errs.append((tr_err/folds,va_err/folds))
+    C=C*2
         
 errs = np.array(errs)
     
