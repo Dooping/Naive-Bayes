@@ -100,7 +100,7 @@ for idx in range(1,21):
     if menorC_va_err >=  va_err/folds:
         menorC_va_err = va_err/folds
         bestNumberofC = C
-    print(menorC_va_err)
+        print(menorC_va_err)
         
         #
     print tr_err/folds, va_err/folds#, np.std.std_mean/folds #adicionar desvio padrao
