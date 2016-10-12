@@ -57,13 +57,15 @@ means = np.mean(xs, axis = 0)
 stdevs = np.std(xs, axis = 0)
 xs = (xs - means)/stdevs
 
+xr,xt,yr,yt = tts(xs, ys,test_size = 0.33, stratify=ys)
+
 
 #logistic regression
-def calc_fold(feats,X,Y,train_ix,valid_ix,C=10e12):
+def calc_fold(X,Y,train_ix,valid_ix,C=10e12):
     reg = lr(C=C,tol = 10e-10)
-    reg.fit(X[train_ix,:feats],Y[train_ix])
+    reg.fit(X[train_ix,:],Y[train_ix])
     #probabilidades do valor estimado da classe
-    prob = reg.predict_proba(X[:,:feats])[:,1]
+    prob = reg.predict_proba(X[:,:])[:,1]
     #mean_square_error
     squares = (prob - Y)**2
     #queremos 2 erros, o do test e o do train.
@@ -88,28 +90,31 @@ arrayC = []
 for idx in range(1,21):
     tr_err = va_err = 0
     for tr_ix,va_ix in kf:#for k,(tr_ix,va_ix) in enumerate(kf)
-        r,v = calc_fold(feats,xr,yr,tr_ix, va_ix,C)
+        r,v = calc_fold(xr,yr,tr_ix, va_ix,C)
         tr_err += r
         va_err += v
+        
     
         #menor erro validade
         #guardar esse c em especifico. meter no grafico os erros em funcao do enunciado
-    if menorC_va_err >=  va_err:
-        menorC_va_err = va_err
+    if menorC_va_err >=  va_err/folds:
+        menorC_va_err = va_err/folds
         bestNumberofC = C
         print(menorC_va_err)
         
         #
-    print feats,':',tr_err/folds, va_err/folds#, np.std.std_mean/folds #adicionar desvio padrao
+    print tr_err/folds, va_err/folds#, np.std.std_mean/folds #adicionar desvio padrao
     
     errs.append((tr_err/folds,va_err/folds))
+    arrayC.append(C)
     C=C*2
         
 errs = np.array(errs)
     
 fig = plt.figure(figsize = (8,8), frameon = False)
-plt.plot(range(1,21),errs[:,0],'-b',linewidth=3)
-plt.plot(range(1,21),errs[:,1],'-r',linewidth=3)
+plt.plot(arrayC,errs[:,0],'-b',linewidth=3)
+plt.plot(arrayC,errs[:,1],'-r',linewidth=3)
+plt.semilogx()
 plt.show
 
 
