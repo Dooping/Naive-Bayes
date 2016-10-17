@@ -100,11 +100,11 @@ for idx in range(1,21):
     if menorC_va_err >=  va_err/folds:
         menorC_va_err = va_err/folds
         bestNumberofC = C
-        print(menorC_va_err)
+        #print(menorC_va_err)
         
-        #
-    print tr_err/folds, va_err/folds#, np.std.std_mean/folds #adicionar desvio padrao
-    
+    #imprimir os valores de treino e validaçao
+    #print tr_err/folds, va_err/folds#, np.std.std_mean/folds #adicionar desvio padrao
+
     errs.append((tr_err/folds,va_err/folds))
     arrayC.append(C)
     C=C*2
@@ -117,6 +117,46 @@ plt.plot(arrayC,errs[:,1],'-r',linewidth=3)
 plt.semilogx()
 plt.show
 
+knn_err = []
+arrayK = []
+def calc_fold_knn(X,Y,train_ix,valid_ix,C=10e12):
+    neigh = KNeighborsClassifier(k,'distance')
+    neigh.fit(X[train_ix,:],Y[train_ix])
+    #probabilidades do valor estimado da classe
+    prob = neigh.predict_proba(X[:,:])[:,1]
+    #mean_square_error
+    squares = (prob - Y)**2
+    #queremos 2 erros, o do test e o do train.
+    return np.mean(squares[train_ix]),np.mean(squares[valid_ix])
+    
+for k in range(1,40):
+    tr_err = va_err = 0
+    #print "-----------------------"
+    for tr_ix,va_ix in kf:#for k,(tr_ix,va_ix) in enumerate(kf)
+        r,v = calc_fold_knn(xr,yr,tr_ix, va_ix,1)
+        #print r,v
+        tr_err += r
+        va_err += v
+        
+        
+    #imprimir os valores de treino e validaçao
+    #print tr_err/folds, va_err/folds, 1-(va_err/folds)
+    knn_err.append((tr_err/folds,va_err/folds))
+    arrayK.append(k)
+knn_err = np.array(knn_err)
+
+    
+fig = plt.figure(figsize = (8,8), frameon = False)
+plt.plot(arrayK,knn_err[:,0],'-b',linewidth=3)
+plt.plot(arrayK,knn_err[:,1],'-r',linewidth=3)
+plt.show
+    
+
+#print b
+#for tt in xt:
+    #print neigh.predict([tt])
+#print xr
+#print a.toarray()
 
 
 
