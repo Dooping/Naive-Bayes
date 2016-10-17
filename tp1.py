@@ -130,19 +130,20 @@ def calc_fold_knn(X,Y,train_ix,valid_ix,C=10e12):
     return np.mean(squares[train_ix]),np.mean(squares[valid_ix])
     
 for k in range(1,40):
-    tr_err = va_err = 0
-    #print "-----------------------"
-    for tr_ix,va_ix in kf:#for k,(tr_ix,va_ix) in enumerate(kf)
-        r,v = calc_fold_knn(xr,yr,tr_ix, va_ix,1)
-        #print r,v
-        tr_err += r
-        va_err += v
-        
-        
-    #imprimir os valores de treino e validaçao
-    #print tr_err/folds, va_err/folds, 1-(va_err/folds)
-    knn_err.append((tr_err/folds,va_err/folds))
-    arrayK.append(k)
+    if k % 2 !=0:
+        tr_err = va_err = 0
+        #print "-----------------------"
+        for tr_ix,va_ix in kf:#for k,(tr_ix,va_ix) in enumerate(kf)
+            r,v = calc_fold_knn(xr,yr,tr_ix, va_ix,1)
+            #print r,v
+            tr_err += r
+            va_err += v
+            
+            
+        #imprimir os valores de treino e validaçao
+        #print tr_err/folds, va_err/folds, 1-(va_err/folds)
+        knn_err.append((tr_err/folds,va_err/folds))
+        arrayK.append(k)
 knn_err = np.array(knn_err)
 
     
