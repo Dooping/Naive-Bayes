@@ -43,6 +43,35 @@ from sklearn.cross_validation import cross_val_score
 #... Queremos erro= 1- cross_val_score
 # Queremos sempre o mais pequeno erro
 
+#bayes classifier
+
+'''
+class kdeNB
+
+    def _init_ (self, bw):
+        self.bw = bw
+        
+        def fit(self, X, Y)
+        #split the original data X, by the binary class values. separar a nota verdadeira da falsa a dividir numero total de notas
+        #calculate prior probabilities for each of the binary class values in a log scale
+        #for each feature:
+            fit kernelDensity for data of class 0
+            fit kernelDensity fot data of class 1
+        
+        #list the fitted parameter tuples
+        
+        *fit kernelDensity
+        kde0 = KernelDensity(kernel = 'gaussian', bandwidth = self.bw)
+        kde0.fit(X0[:,[ix]])
+        
+        *Idem para X1
+        kde1 = KernelDensity(kernel = 'gaussian', bandwidth = self.bw)
+        kde1.fit(X1[:,[ix]])
+        
+        self.kdes.append((kde0,kde1))
+
+'''
+
 
 
 
@@ -120,14 +149,15 @@ plt.show
 knn_err = []
 arrayK = []
 def calc_fold_knn(X,Y,train_ix,valid_ix,C=10e12):
-    neigh = KNeighborsClassifier(k,'distance')
+    neigh = KNeighborsClassifier(k)
     neigh.fit(X[train_ix,:],Y[train_ix])
     #probabilidades do valor estimado da classe
-    prob = neigh.predict_proba(X[:,:])[:,1]
+    score = neigh.score(X[valid_ix,:],Y[valid_ix])
     #mean_square_error
-    squares = (prob - Y)**2
+    #squares = (prob - Y)**2
     #queremos 2 erros, o do test e o do train.
-    return np.mean(squares[train_ix]),np.mean(squares[valid_ix])
+    #return np.mean(squares[train_ix]),np.mean(squares[valid_ix])
+    return 0,1-score
     
 for k in range(1,40):
     if k % 2 !=0:
@@ -153,15 +183,86 @@ plt.plot(arrayK,knn_err[:,1],'-r',linewidth=3)
 plt.show
     
 
-#print b
-#for tt in xt:
-    #print neigh.predict([tt])
-#print xr
-#print a.toarray()
 
 
 
+class kdeNB:
 
+    def _init_ (self, bw):
+        self.bw = bw
+        
+    #split the original data X, by the binary class values. separar a nota verdadeira da falsa a dividir pelo numero total de notas
+    #calculate prior probabilities for each of the binary class values in a log scale
+    #for each feature:
+        #fit kernelDensity for data of class 0
+        #fit kernelDensity fot data of class 1
+    #list the fitted parameter tuples
+    def fit(self, X, Y):
+        x0 = X[Y==0,:]
+        x1 = X[Y==1,:]
+
+    #devolve uma accuracy
+    def score(self, X, Y)
+        p0 = np.ones(X.shape[0])*self.#prob calculada no fit
+        p1 = np.ones(X.shape[0])*self.#same
+        #for each feature
+        for ix in range(X.shape[1]):#buscar as features
+            p0 = p0 + self.kdes[ix][0].score_samples(...)
+            p1 = p1 + self.kdes[ix][0].score_samples(...)
+            #calculate predictions
+            pred = ...
+     
+    
+    #*fit kernelDensity
+    #kde0 = KernelDensity(kernel = 'gaussian', bandwidth = self.bw)
+    #kde0.fit(X0[:,[ix]])
+    
+    #*Idem para X1
+    #kde1 = KernelDensity(kernel = 'gaussian', bandwidth = self.bw)
+    #kde1.fit(X1[:,[ix]])
+    
+    #self.kdes.append((kde0,kde1))
+    
+    '''
+    naive bayes
+    def fit precisa:
+        kernelDensity(kernel = 'gaussian', bandwidth = self.bw)
+    
+    def score precisa:
+        kdes.score_samples(...)
+    
+    def set_params(self, **parameters)
+        for parameter, value in parameters.items():
+            self.setattr(parameter, value)
+        return self
+    def get_params(self,def = true)
+        return {"bw":self.bw}
+    '''
+
+
+
+'''
+    main
+        Xs, Ys = get_data()
+        Xr, Xt, Yr, Yt = tts(Xs, Ys, test_split = 0.3, stratify = Ys)
+        C = 1.0
+        f=10
+        kf = StratifiedKFold(Yr, n_folds = f)
+        Cs = []
+        errs = []
+        lowestErr = 1000000
+        for ix in range(20):
+            reg = LogisticRegression(C, tol = 1e-10)
+            scores = cross_val_score(reg, Xr, Yr, cv = kf)
+            va_err = 1 - np.mean(scores)
+            if va_err < lowest:
+                lowest = va_err
+                bestC = C
+            errs.append(va_err)
+            Cs.append(C)
+            C = C*2
+            #testar e calcular erro de teste
+'''
 
 
 
