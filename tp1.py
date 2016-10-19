@@ -202,7 +202,7 @@ class kdeNB:
         x1 = X[Y==1,:]
 
     #devolve uma accuracy
-    def score(self, X, Y)
+    def score(self, X, Y):
         p0 = np.ones(X.shape[0])*self.#prob calculada no fit
         p1 = np.ones(X.shape[0])*self.#same
         #for each feature
