@@ -148,7 +148,7 @@ plt.show
 
 knn_err = []
 arrayK = []
-def calc_fold_knn(X,Y,train_ix,valid_ix,C=10e12):
+def calc_fold_knn(X,Y,train_ix,valid_ix,k):
     neigh = KNeighborsClassifier(k)
     neigh.fit(X[train_ix,:],Y[train_ix])
     #probabilidades do valor estimado da classe
@@ -164,7 +164,7 @@ for k in range(1,40):
         tr_err = va_err = 0
         #print "-----------------------"
         for tr_ix,va_ix in kf:#for k,(tr_ix,va_ix) in enumerate(kf)
-            r,v = calc_fold_knn(xr,yr,tr_ix, va_ix,1)
+            r,v = calc_fold_knn(xr,yr,tr_ix, va_ix,k)
             #print r,v
             tr_err += r
             va_err += v
@@ -190,7 +190,14 @@ class kdeNB:
 
     def _init_ (self, bw):
         self.bw = bw
+    
+    def set_params(self, **parameters):
+        for parameter, value in parameters.items():
+            self.setattr(parameter, value)
         
+    def get_params(self,deep = True):
+        return {"bw":self.bw}
+
     #split the original data X, by the binary class values. separar a nota verdadeira da falsa a dividir pelo numero total de notas
     #calculate prior probabilities for each of the binary class values in a log scale
     #for each feature:
@@ -200,18 +207,31 @@ class kdeNB:
     def fit(self, X, Y):
         x0 = X[Y==0,:]
         x1 = X[Y==1,:]
+        self.pc0 = np.log(np.float(x0.shape[0])/np.float(X.shape[0]))
+        self.pc1 = np.log(np.float(x1.shape[0])/np.float(X.shape[0]))
+
+        self.kdes = []
+        for ix in range(X.shape[1]):
+            kde0 = KernelDensity(kernel = 'gaussian', bandwidth = self.bw)
+            kde0.fit(x0[:,[ix]])
+            kde1 = KernelDensity(kernel = 'gaussian', bandwidth = self.bw)
+            kde1.fit(x1[:,[ix]])
+            self.kdes.append((kde0,kde1))
 
     #devolve uma accuracy
     def score(self, X, Y):
-        p0 = np.ones(X.shape[0])*self.#prob calculada no fit
-        p1 = np.ones(X.shape[0])*self.#same
+        p0 = np.ones(X.shape[0])*self.pc0
+        p1 = np.ones(X.shape[0])*self.pc1
         #for each feature
         for ix in range(X.shape[1]):#buscar as features
-            p0 = p0 + self.kdes[ix][0].score_samples(...)
-            p1 = p1 + self.kdes[ix][0].score_samples(...)
-            #calculate predictions
-            pred = ...
-     
+            p0 = p0 + self.kdes[ix][0].score_samples(X[:,[ix]])
+            p1 = p1 + self.kdes[ix][1].score_samples(X[:,[ix]])
+        #calculate predictions
+        classes = np.zeros(X.shape[0])
+        for row in range(X.shape[0]):
+            if (p0[row]<p1[row] and Y[row]==1) or (p0[row]>p1[row] and Y[row]==0):
+                classes[row]=1  #do slide a função classify deve ser algo parecido
+        return (sum(classes)/classes.shape[0])*100
     
     #*fit kernelDensity
     #kde0 = KernelDensity(kernel = 'gaussian', bandwidth = self.bw)
@@ -267,12 +287,42 @@ class kdeNB:
 
 
 
+nb_err = []
+arrayBw = []
+def calc_fold_nb(X,Y,train_ix,valid_ix,bw):
+    nBayes = kdeNB()
+    nBayes._init_(bw)
+    nBayes.fit(X[train_ix,:],Y[train_ix])
+    scoreT = nBayes.score(X[train_ix,:],Y[train_ix])
+    #probabilidades do valor estimado da classe
+    score = nBayes.score(X[valid_ix,:],Y[valid_ix])
+    #mean_square_error
+    #squares = (prob - Y)**2
+    #queremos 2 erros, o do test e o do train.
+    #return np.mean(squares[train_ix]),np.mean(squares[valid_ix])
+    return 1-scoreT,1-score
 
+bwRange = np.arange(0.01,1,0.02)
+for bw in bwRange:
+    tr_err = va_err = 0
+        #print "-----------------------"
+    for tr_ix,va_ix in kf:#for k,(tr_ix,va_ix) in enumerate(kf)
+        r,v = calc_fold_nb(xr,yr,tr_ix, va_ix,bw)
+        #print r,v
+        tr_err += r
+        va_err += v
+            
+            
+    #imprimir os valores de treino e validaçao
+    #print tr_err/folds, va_err/folds, 1-(va_err/folds)
+    nb_err.append((tr_err/folds,va_err/folds))
+    arrayBw.append(bw)
+nb_err = np.array(nb_err)
 
-
-
-
-
+fig = plt.figure(figsize = (8,8), frameon = False)
+plt.plot(arrayBw,nb_err[:,0],'-b',linewidth=3)
+plt.plot(arrayBw,nb_err[:,1],'-r',linewidth=3)
+plt.show
 
 
 
