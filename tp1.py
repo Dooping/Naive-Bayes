@@ -231,7 +231,7 @@ class kdeNB:
         for row in range(X.shape[0]):
             if (p0[row]<p1[row] and Y[row]==1) or (p0[row]>p1[row] and Y[row]==0):
                 classes[row]=1  #do slide a função classify deve ser algo parecido
-        return (sum(classes)/classes.shape[0])*100
+        return (sum(classes)/classes.shape[0])
     
     #*fit kernelDensity
     #kde0 = KernelDensity(kernel = 'gaussian', bandwidth = self.bw)
@@ -318,6 +318,7 @@ for bw in bwRange:
     nb_err.append((tr_err/folds,va_err/folds))
     arrayBw.append(bw)
 nb_err = np.array(nb_err)
+print nb_err
 
 fig = plt.figure(figsize = (8,8), frameon = False)
 plt.plot(arrayBw,nb_err[:,0],'-b',linewidth=3)
