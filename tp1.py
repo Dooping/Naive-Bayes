@@ -259,33 +259,24 @@ plt.show
 def mcnemar(Pa, Pb, Y):
     e01 = Pb[np.logical_or(np.logical_and(np.logical_and(Pb == 0 , Pa == 1), Y == 0),np.logical_and(np.logical_and(Pb == 1 , Pa == 0), Y == 1))]
     e10 = Pa[np.logical_or(np.logical_and(np.logical_and(Pb == 0 , Pa == 1), Y == 1),np.logical_and(np.logical_and(Pb == 1 , Pa == 0), Y == 0))]
-    return np.power((np.abs(e01.shape[0] - e10.shape[0])-1),2)/(e01.shape[0] + e10.shape[0])
+    return np.power((np.abs(float(e01.shape[0]) - float(e10.shape[0]))-1),2)/(float(e01.shape[0]) + float(e10.shape[0]))
     #return e01 ,e10
+  
+    
+nBayes = kdeNB(bestBw)
+neigh = KNeighborsClassifier(bestK)
+reg = lr(C=C,tol = 10e-10)
 
-knnVsBayes = []
-regVsKnn = []
-bayesVsReg = []    
-    
-for tr_ix,va_ix in kf:#for k,(tr_ix,va_ix) in enumerate(kf)
-    nBayes = kdeNB(bestBw)
-    neigh = KNeighborsClassifier(bestK)
-    reg = lr(C=C,tol = 10e-10)
-    
-    nBayes.fit(xr[tr_ix,:],yr[tr_ix])
-    neigh.fit(xr[tr_ix,:],yr[tr_ix])
-    reg.fit(xr[tr_ix,:],yr[tr_ix])
-    
-    bayesP = nBayes.predict(xr[va_ix,:])
-    neighP = neigh.predict(xr[va_ix,:])
-    regP = reg.predict(xr[va_ix,:])
-    
-    knnVsBayes.append(mcnemar(neighP,bayesP,yr[va_ix]))
-    regVsKnn.append(mcnemar(regP,neighP,yr[va_ix]))
-    bayesVsReg.append(mcnemar(bayesP,regP,yr[va_ix]))
+nBayes.fit(xr,yr)
+neigh.fit(xr,yr)
+reg.fit(xr,yr)
+
+bayesP = nBayes.predict(xt)
+neighP = neigh.predict(xt)
+regP = reg.predict(xt)
 
 #Espera-se algo do tipo:LogReg vs kNN = 0.5 kNN vs NB = 5.1 NB vs LogReg = 1.8
-print 'LogReg vs kNN = ',np.mean(regVsKnn),' kNN vs NB = ', np.mean(knnVsBayes),' NB vs LogReg = ', np.mean(bayesVsReg)
-
+print 'LogReg vs kNN = ',mcnemar(regP,neighP,yt),' kNN vs NB = ', mcnemar(neighP,bayesP,yt),' NB vs LogReg = ', mcnemar(bayesP,regP,yt)
 
 
 
