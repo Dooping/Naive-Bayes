@@ -277,6 +277,7 @@ regP = reg.predict(xt)
 
 #Espera-se algo do tipo:LogReg vs kNN = 0.5 kNN vs NB = 5.1 NB vs LogReg = 1.8
 print 'LogReg vs kNN = ',mcnemar(regP,neighP,yt),' kNN vs NB = ', mcnemar(neighP,bayesP,yt),' NB vs LogReg = ', mcnemar(bayesP,regP,yt)
+print 'LogReg = ', 1-reg.score(xt, yt), ' kNN = ', 1-neigh.score(xt, yt), ' NB = ', 1-nBayes.score(xt, yt)
 
 
 
