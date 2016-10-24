@@ -15,6 +15,7 @@ from sklearn.cross_validation import train_test_split as tts
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.cross_validation import cross_val_score
+from sklearn.metrics import accuracy_score
 
 class kdeNB:
 
@@ -50,7 +51,7 @@ class kdeNB:
 
     #devolve uma accuracy
     def score(self, X, Y):
-        p0 = np.ones(X.shape[0])*self.pc0
+        '''p0 = np.ones(X.shape[0])*self.pc0
         p1 = np.ones(X.shape[0])*self.pc1
         #for each feature
         for ix in range(X.shape[1]):#buscar as features
@@ -60,8 +61,9 @@ class kdeNB:
         classes = np.zeros(X.shape[0])
         for row in range(X.shape[0]):
             if (p0[row]<p1[row] and Y[row]==1) or (p0[row]>p1[row] and Y[row]==0):
-                classes[row]=1  #do slide a função classify deve ser algo parecido
-        return (sum(classes)/classes.shape[0])
+                classes[row]=1  #do slide a função classify deve ser algo parecido'''
+        
+        return accuracy_score(Y,self.predict(X))
     
     def predict(self, X):
         p0 = np.ones(X.shape[0])*self.pc0
@@ -72,9 +74,10 @@ class kdeNB:
             p1 = p1 + self.kdes[ix][1].score_samples(X[:,[ix]])
         #calculate predictions
         classes = np.zeros(X.shape[0])
-        for row in range(X.shape[0]):
+        classes[p0<p1]=1
+        '''for row in range(X.shape[0]):
             if p0[row]<p1[row]:
-                classes[row]=1  #do slide a função classify deve ser algo parecido
+                classes[row]=1  #do slide a função classify deve ser algo parecido'''
         return classes
         
     
@@ -265,7 +268,7 @@ def mcnemar(Pa, Pb, Y):
     
 nBayes = kdeNB(bestBw)
 neigh = KNeighborsClassifier(bestK)
-reg = lr(C=C,tol = 10e-10)
+reg = lr(C=bestNumberofC,tol = 10e-10)
 
 nBayes.fit(xr,yr)
 neigh.fit(xr,yr)
@@ -277,7 +280,9 @@ regP = reg.predict(xt)
 
 #Espera-se algo do tipo:LogReg vs kNN = 0.5 kNN vs NB = 5.1 NB vs LogReg = 1.8
 print 'LogReg vs kNN = ',mcnemar(regP,neighP,yt),' kNN vs NB = ', mcnemar(neighP,bayesP,yt),' NB vs LogReg = ', mcnemar(bayesP,regP,yt)
-print 'LogReg = ', 1-reg.score(xt, yt), ' kNN = ', 1-neigh.score(xt, yt), ' NB = ', 1-nBayes.score(xt, yt)
+print 'LogReg = ', 1-reg.score(xt, yt), ' with C = ', bestNumberofC
+print 'kNN = ', 1-neigh.score(xt, yt), ' with k = ', bestK
+print 'NB = ', 1-nBayes.score(xt, yt), ' with bw = ', bestBw
 
 
 
