@@ -14,7 +14,6 @@ from sklearn.utils import shuffle
 from sklearn.cross_validation import train_test_split as tts
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors.kde import KernelDensity
-from sklearn.cross_validation import cross_val_score
 from sklearn.metrics import accuracy_score
 
 class kdeNB:
@@ -51,18 +50,6 @@ class kdeNB:
 
     #devolve uma accuracy
     def score(self, X, Y):
-        '''p0 = np.ones(X.shape[0])*self.pc0
-        p1 = np.ones(X.shape[0])*self.pc1
-        #for each feature
-        for ix in range(X.shape[1]):#buscar as features
-            p0 = p0 + self.kdes[ix][0].score_samples(X[:,[ix]])
-            p1 = p1 + self.kdes[ix][1].score_samples(X[:,[ix]])
-        #calculate predictions
-        classes = np.zeros(X.shape[0])
-        for row in range(X.shape[0]):
-            if (p0[row]<p1[row] and Y[row]==1) or (p0[row]>p1[row] and Y[row]==0):
-                classes[row]=1  #do slide a função classify deve ser algo parecido'''
-        
         return accuracy_score(Y,self.predict(X))
     
     def predict(self, X):
@@ -75,44 +62,28 @@ class kdeNB:
         #calculate predictions
         classes = np.zeros(X.shape[0])
         classes[p0<p1]=1
-        '''for row in range(X.shape[0]):
-            if p0[row]<p1[row]:
-                classes[row]=1  #do slide a função classify deve ser algo parecido'''
         return classes
-        
-    
 
 
-#logisticRegression
-#finetuning to obtain best C
-#grafico com
-#error_rate, train/validation
-#error_rate, test Data
-#queremos o menor erro
+def calc_fold_classifier(X,Y,train_ix,valid_ix,classifier):
+    classifier.fit(X[train_ix,:],Y[train_ix])
 
-#k-nn
-#finetuning to obtain best k
-
-#naive bayes (kernel gaussian)
-#finetunning to obtain the best band width
-
-#getdata
-#train_test_split
-#folds
-#kf = stratifiedkfold(...)
-
-#C=1.0
-#...
-#errs=[]
-#for ix in range(20)
-#...
-#cross_val_score
-#... Queremos erro= 1- cross_val_score
-# Queremos sempre o mais pequeno erro
-
-#bayes classifier
+    score = classifier.score(X[valid_ix,:],Y[valid_ix])
+    scoreT = classifier.score(X[train_ix,:],Y[train_ix])
+    return 1-scoreT, 1-score
 
 
+def mcnemar(Pa, Pb, Y):
+    e01 = Pb[np.logical_or(np.logical_and(np.logical_and(Pb == 0 , Pa == 1), Y == 0),np.logical_and(np.logical_and(Pb == 1 , Pa == 0), Y == 1))]
+    e10 = Pa[np.logical_or(np.logical_and(np.logical_and(Pb == 0 , Pa == 1), Y == 1),np.logical_and(np.logical_and(Pb == 1 , Pa == 0), Y == 0))]
+    return np.power((np.abs(float(e01.shape[0]) - float(e10.shape[0]))-1),2)/(float(e01.shape[0]) + float(e10.shape[0]))
+
+def plotErrs(X, Y):
+    plt.figure(figsize = (8,8), frameon = False)
+    plt.plot(X,Y[:,0],'-b',linewidth=3)
+    plt.plot(X,Y[:,1],'-r',linewidth=3)
+    #plt.semilogx()
+    plt.show
 
 
 data = np.loadtxt('TP1-data.csv', delimiter = ',')
@@ -125,25 +96,19 @@ xs = data[:,:4]   #features
 means = np.mean(xs, axis = 0)
 stdevs = np.std(xs, axis = 0)
 xs = (xs - means)/stdevs
-
 xr,xt,yr,yt = tts(xs, ys,test_size = 0.33, stratify=ys)
 
-
-def calc_fold_classifier(X,Y,train_ix,valid_ix,classifier):
-    classifier.fit(X[train_ix,:],Y[train_ix])
-
-    score = classifier.score(X[valid_ix,:],Y[valid_ix])
-    scoreT = classifier.score(X[train_ix,:],Y[train_ix])
-    return 1-scoreT, 1-score
 
     
 errs = []
 # numero de vezes que itera para depois fazer a média
 folds = 10
-
 kf = skf(yr,n_folds = folds)
 
 
+
+
+''' Logistic Regression '''
 menorC_va_err=200000
 
 #Parametro especifico
@@ -152,8 +117,6 @@ C=1;
 bestNumberofC=0
 #Plot the errors against the logarithm of the C value
 arrayC = []
-
-#logistic regression
 for idx in range(1,21):
     tr_err = va_err = 0
     for tr_ix,va_ix in kf:#for k,(tr_ix,va_ix) in enumerate(kf)
@@ -164,29 +127,22 @@ for idx in range(1,21):
         va_err += v
         
     
-        #menor erro validade
-        #guardar esse c em especifico. meter no grafico os erros em funcao do enunciado
+    #menor erro validacao
+    #guardar esse c em especifico. meter no grafico os erros em funcao do enunciado
     if menorC_va_err >=  va_err/folds:
         menorC_va_err = va_err/folds
         bestNumberofC = C
         
-        #print(menorC_va_err)
-        
-    #imprimir os valores de treino e validaçao
-    #print tr_err/folds, va_err/folds#, np.std.std_mean/folds #adicionar desvio padrao
 
     errs.append((tr_err/folds,va_err/folds))
     arrayC.append(np.log(C))
     C=C*2
         
 errs = np.array(errs)
-    
-fig = plt.figure(figsize = (8,8), frameon = False)
-plt.plot(arrayC,errs[:,0],'-b',linewidth=3)
-plt.plot(arrayC,errs[:,1],'-r',linewidth=3)
-#plt.semilogx()
-plt.show
+plotErrs(arrayC,errs)
 
+
+''' K-Nearest Neighbours '''
 knn_err = []
 arrayK = []
 
@@ -196,11 +152,9 @@ bestK=0
 for k in range(1,40):
     if k % 2 !=0:
         tr_err = va_err = 0
-        #print "-----------------------"
         for tr_ix,va_ix in kf:#for k,(tr_ix,va_ix) in enumerate(kf)
             neigh = KNeighborsClassifier(k)
             r,v = calc_fold_classifier(xr,yr,tr_ix, va_ix,neigh)
-            #print r,v
             tr_err += r
             va_err += v
             
@@ -208,24 +162,12 @@ for k in range(1,40):
             k_va_err = va_err/folds
             bestK = k  
         
-        #imprimir os valores de treino e validaçao
-        #print tr_err/folds, va_err/folds, 1-(va_err/folds)
         knn_err.append((tr_err/folds,va_err/folds))
         arrayK.append(k)
 knn_err = np.array(knn_err)
+plotErrs(arrayK,knn_err)
 
-    
-fig = plt.figure(figsize = (8,8), frameon = False)
-plt.plot(arrayK,knn_err[:,0],'-b',linewidth=3)
-plt.plot(arrayK,knn_err[:,1],'-r',linewidth=3)
-plt.show
-    
-
-
-
-
-
-
+''' Naive Bayes '''
 bw_va_err=200000
 bestBw=0
 
@@ -248,22 +190,11 @@ for bw in bwRange:
         bw_va_err = va_err/folds
         bestBw = bw
             
-    #imprimir os valores de treino e validaçao
-    #print tr_err/folds, va_err/folds, 1-(va_err/folds)
     nb_err.append((tr_err/folds,va_err/folds))
     arrayBw.append(bw)
 nb_err = np.array(nb_err)
+plotErrs(arrayBw,nb_err)
 
-fig = plt.figure(figsize = (8,8), frameon = False)
-plt.plot(arrayBw,nb_err[:,0],'-b',linewidth=3)
-plt.plot(arrayBw,nb_err[:,1],'-r',linewidth=3)
-plt.show
-
-def mcnemar(Pa, Pb, Y):
-    e01 = Pb[np.logical_or(np.logical_and(np.logical_and(Pb == 0 , Pa == 1), Y == 0),np.logical_and(np.logical_and(Pb == 1 , Pa == 0), Y == 1))]
-    e10 = Pa[np.logical_or(np.logical_and(np.logical_and(Pb == 0 , Pa == 1), Y == 1),np.logical_and(np.logical_and(Pb == 1 , Pa == 0), Y == 0))]
-    return np.power((np.abs(float(e01.shape[0]) - float(e10.shape[0]))-1),2)/(float(e01.shape[0]) + float(e10.shape[0]))
-    #return e01 ,e10
   
     
 nBayes = kdeNB(bestBw)
