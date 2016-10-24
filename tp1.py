@@ -82,15 +82,13 @@ def plotErrs(X, Y):
     plt.figure(figsize = (8,8), frameon = False)
     plt.plot(X,Y[:,0],'-b',linewidth=3)
     plt.plot(X,Y[:,1],'-r',linewidth=3)
-    #plt.semilogx()
     plt.show
 
 
 data = np.loadtxt('TP1-data.csv', delimiter = ',')
 
 shuffle(data)
-#data = mat
-ys = data[:,4]    #atributo classe
+ys = data[:,4]    #classe
 xs = data[:,:4]   #features
 
 means = np.mean(xs, axis = 0)
@@ -122,7 +120,6 @@ for idx in range(1,21):
     for tr_ix,va_ix in kf:#for k,(tr_ix,va_ix) in enumerate(kf)
         reg = lr(C=C,tol = 10e-10)
         r,v = calc_fold_classifier(xr,yr,tr_ix, va_ix,reg)
-        #r,v = calc_fold(xr,yr,tr_ix, va_ix,C)
         tr_err += r
         va_err += v
         
@@ -178,11 +175,9 @@ arrayBw = []
 bwRange = np.arange(0.01,1,0.02)
 for bw in bwRange:
     tr_err = va_err = 0
-        #print "-----------------------"
     for tr_ix,va_ix in kf:#for k,(tr_ix,va_ix) in enumerate(kf)
         nBayes = kdeNB(bw)
         r,v = calc_fold_classifier(xr,yr,tr_ix, va_ix,nBayes)
-        #print r,v
         tr_err += r
         va_err += v
             
